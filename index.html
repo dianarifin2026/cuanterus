@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusPay - Dashboard Premium & Sistem Referral</title>
+  
+  <!-- Inline Favicon SVG untuk Menghilangkan Error 404 Favicon secara Instan -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>💎</text></svg>">
+  
+  <!-- Google Font: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Google Identity Services (Untuk Login dengan Google asli) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              950: '#090d16',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    
+    /* Smooth Transition */
+    .transition-all-300 {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="bg-brand-950 text-slate-100 min-h-screen font-sans flex flex-col selection:bg-brand-500 selection:text-white overflow-x-hidden">
+
+  <!-- ================= HEADER UTAMA ================= -->
+  <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-40 transition-all-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <i data-lucide="layers" class="w-5.5 h-5.5 text-white"></i>
+        </div>
+        <div>
+          <span class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">NEXUS</span>
+          <span class="text-xs block text-slate-400 font-medium -mt-1">Dashboard v1.2</span>
+        </div>
+      </div>
+      
+      <!-- API Status Badge -->
+      <div class="flex items-center gap-3">
+        <div id="apiStatusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400 transition-all-300">
+          <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse" id="statusDot"></span>
+          <span id="statusText">Menghubungkan Server...</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= LOADING & TROUBLESHOOT OVERLAY ================= -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 hidden transition-all-300">
+    <div class="relative w-16 h-16">
+      <div class="absolute inset-0 rounded-full border-4 border-slate-800"></div>
+      <div class="absolute inset-0 rounded-full border-4 border-brand-500 border-t-transparent animate-spin"></div>
+    </div>
+    <p class="text-slate-300 text-sm font-medium tracking-wide" id="loadingText">Menghubungkan ke server...</p>
+  </div>
+
+  <!-- Screen Helper: Ditampilkan jika URL Apps Script Belum Terpasang / Error -->
+  <div id="setupHelperScreen" class="fixed inset-0 bg-brand-950 z-50 flex items-center justify-center p-4 hidden">
+    <div class="max-w-xl w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl -z-10"></div>
+      <div class="text-center space-y-4">
+        <div class="w-16 h-16 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center mx-auto mb-2">
+          <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-white tracking-tight">Koneksi Database Belum Terpasang</h2>
+        <p class="text-slate-400 text-sm leading-relaxed">
+          Sistem mendeteksi bahwa <code class="text-indigo-300 bg-slate-950 px-1.5 py-0.5 rounded border border-slate-800">APPS_SCRIPT_URL</code> belum diganti dengan tautan Web App Google Apps Script Anda yang valid, atau browser memblokir koneksi ke server.
+        </p>
+        
+        <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-left space-y-3">
+          <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="help-circle" class="w-4 h-4 text-brand-400"></i> Cara Memperbaikinya:
+          </h3>
+          <ol class="text-xs text-slate-400 space-y-2 list-decimal list-inside leading-relaxed">
+            <li>Buka file <span class="text-slate-200 font-semibold">index.html</span> di editor kode Anda.</li>
+            <li>Cari baris variabel <code class="text-indigo-400">const APPS_SCRIPT_URL</code> (baris 350-360).</li>
+            <li>Ganti nilai placeholder tersebut dengan tautan deployment Apps Script Anda (berakhiran <code class="text-indigo-400">/exec</code>).</li>
+            <li>Pastikan deployment di-set ke: <span class="text-emerald-400 font-semibold">Execute as: Me</span> dan <span class="text-emerald-400 font-semibold">Who has access: Anyone</span>.</li>
+          </ol>
+        </div>
+
+        <div class="pt-4 flex flex-col sm:flex-row gap-3">
+          <button onclick="window.location.reload()" class="flex-1 py-3 bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white font-bold text-sm rounded-xl transition-all-300 flex items-center justify-center gap-2">
+            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Muat Ulang Halaman
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel Toast Notifikasi -->
+  <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 max-w-sm w-full px-4 sm:px-0"></div>
+
+  <!-- ================= KONTEN UTAMA ================= -->
+  <main class="flex-grow flex items-center justify-center py-10 px-4">
+    <div class="max-w-7xl w-full mx-auto">
+      
+      <!-- 1. FORM AUTH (LOGIN & REGISTER) -->
+      <div id="authContainer" class="max-w-md mx-auto transition-all-300">
+        
+        <!-- Tab Switcher -->
+        <div class="flex bg-slate-900 p-1.5 rounded-2xl border border-slate-800 mb-6">
+          <button onclick="switchAuthTab('login')" id="tabBtnLogin" class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 bg-brand-600 text-white shadow-lg">
+            Masuk Akun
+          </button>
+          <button onclick="switchAuthTab('register')" id="tabBtnRegister" class="flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 text-slate-400 hover:text-white">
+            Daftar Baru
+          </button>
+        </div>
+
+        <!-- CARD UTAMA AUTH -->
+        <div class="bg-slate-900 border border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute top-0 right-0 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl -z-10"></div>
+          
+          <!-- Formulir Login -->
+          <div id="loginFormSection" class="space-y-5">
+            <div class="text-center mb-2">
+              <h2 class="text-2xl font-bold text-white tracking-tight">Selamat Datang Kembali</h2>
+              <p class="text-slate-400 text-xs mt-1">Gunakan Gmail dan kata sandi Anda untuk mengakses dashboard.</p>
+            </div>
+            
+            <form onsubmit="handleAuthSubmit(event, 'login')" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wider uppercase">Alamat Gmail</label>
+                <div class="relative">
+                  <i data-lucide="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="email" id="loginGmail" required placeholder="nama@gmail.com" class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wider uppercase">Kata Sandi</label>
+                <div class="relative">
+                  <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="password" id="loginPassword" required placeholder="••••••••" class="w-full pl-11 pr-11 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600">
+                  <button type="button" onclick="togglePasswordVisibility('loginPassword', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300 outline-none">
+                    <i data-lucide="eye" class="w-5 h-5"></i>
+                  </button>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3.5 bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-brand-600/20 transition-all-300 flex items-center justify-center gap-2">
+                <i data-lucide="log-in" class="w-4 h-4"></i> Masuk Sekarang
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative flex py-2 items-center">
+              <div class="flex-grow border-t border-slate-800"></div>
+              <span class="flex-shrink mx-4 text-slate-500 text-xs uppercase tracking-wider">Atau masuk dengan</span>
+              <div class="flex-grow border-t border-slate-800"></div>
+            </div>
+
+            <!-- Tombol Google Login -->
+            <div class="flex justify-center flex-col items-center gap-2">
+              <div id="googleBtnLogin" class="w-full flex justify-center"></div>
+            </div>
+          </div>
+
+          <!-- Formulir Register -->
+          <div id="registerFormSection" class="space-y-5 hidden">
+            <div class="text-center mb-2">
+              <h2 class="text-2xl font-bold text-white tracking-tight">Buat Akun Baru</h2>
+              <p class="text-slate-400 text-xs mt-1">Dapatkan bonus saldo langsung senilai <strong>Rp 5.000</strong> saat pendaftaran!</p>
+            </div>
+            
+            <form onsubmit="handleAuthSubmit(event, 'register')" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wider uppercase">Nama Pengguna (Username)</label>
+                <div class="relative">
+                  <i data-lucide="user" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="text" id="registerUsername" required minlength="3" placeholder="Contoh: ryan99" class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wider uppercase">Alamat Gmail</label>
+                <div class="relative">
+                  <i data-lucide="mail" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="email" id="registerGmail" required placeholder="nama@gmail.com" class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600">
+                </div>
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1.5 tracking-wider uppercase">Kata Sandi (Min. 6 Karakter)</label>
+                <div class="relative">
+                  <i data-lucide="lock" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="password" id="registerPassword" required minlength="6" placeholder="••••••••" class="w-full pl-11 pr-11 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600">
+                  <button type="button" onclick="togglePasswordVisibility('registerPassword', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300 outline-none">
+                    <i data-lucide="eye" class="w-5 h-5"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Kode Referral (Opsional)</label>
+                <div class="relative">
+                  <i data-lucide="gift" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500"></i>
+                  <input type="text" id="registerReferral" placeholder="Masukkan kode pengundang jika ada" class="w-full pl-11 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-600 uppercase">
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-600/20 transition-all-300 flex items-center justify-center gap-2">
+                <i data-lucide="user-plus" class="w-4 h-4"></i> Daftar Sekarang
+              </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="relative flex py-2 items-center">
+              <div class="flex-grow border-t border-slate-800"></div>
+              <span class="flex-shrink mx-4 text-slate-500 text-xs uppercase tracking-wider">Atau daftar dengan</span>
+              <div class="flex-grow border-t border-slate-800"></div>
+            </div>
+
+            <!-- Tombol Google Signup -->
+            <div class="flex justify-center flex-col items-center gap-2">
+              <div id="googleBtnRegister" class="w-full flex justify-center"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 2. DASHBOARD UTAMA (SETELAH LOGIN BERHASIL) -->
+      <div id="dashboardContainer" class="hidden transition-all-300 space-y-8">
+        
+        <!-- Welcome banner -->
+        <div class="bg-gradient-to-r from-brand-600 via-indigo-600 to-indigo-800 rounded-3xl p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+          <div class="flex items-center gap-4">
+            <div class="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-7 h-7 text-white"></i>
+            </div>
+            <div>
+              <h1 class="text-xl sm:text-2xl font-black text-white">Halo, <span id="dashUsername" class="underline decoration-indigo-300 decoration-wavy">User</span>! 👋</h1>
+              <p class="text-indigo-100 text-xs sm:text-sm mt-1" id="dashEmail">user@gmail.com</p>
+            </div>
+          </div>
+          
+          <button onclick="logout()" class="px-5 py-2.5 bg-slate-950/40 hover:bg-slate-950/60 text-white border border-white/10 rounded-xl text-sm font-semibold transition-all-300 flex items-center gap-2">
+            <i data-lucide="log-out" class="w-4 h-4"></i> Keluar Akun
+          </button>
+        </div>
+
+        <!-- 3 Baris Info Finansial & Statistik Utama -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          <!-- Card 1: Saldo Utama -->
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Saldo Anda</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-3xl font-extrabold text-white tracking-tight" id="dashSaldo">Rp 0</div>
+            <p class="text-slate-500 text-xs mt-1.5 flex items-center gap-1">
+              <i data-lucide="info" class="w-3 h-3 text-slate-400"></i> Saldo terintegrasi real-time.
+            </p>
+          </div>
+
+          <!-- Card 2: Statistik Referral -->
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-24 h-24 bg-brand-500/5 rounded-full blur-2xl"></div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Teman Bergabung</span>
+              <div class="w-8 h-8 rounded-lg bg-brand-500/10 flex items-center justify-center text-brand-400">
+                <i data-lucide="users" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <div class="text-3xl font-extrabold text-white tracking-tight" id="dashRefCount">0 Orang</div>
+            <p class="text-slate-400 text-xs mt-1.5 font-medium">
+              Total komisi: <span class="text-brand-400 font-bold" id="dashRefTotalBonus">Rp 0</span>
+            </p>
+          </div>
+
+          <!-- Card 3: Kode Referral & Link Share -->
+          <div class="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest font-semibold">Tautan Referral Anda</span>
+                <span class="text-xs font-extrabold text-brand-400 tracking-wider bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/10" id="dashRefCode">CODE</span>
+              </div>
+              <p class="text-slate-500 text-xs mb-3">Bagikan tautan ini dan raih bonus <strong>Rp 10.000</strong> per orang!</p>
+            </div>
+            <div class="flex gap-2">
+              <input type="text" readonly id="referralUrlInput" class="bg-slate-950 border border-slate-800 px-3 py-2 rounded-xl text-xs text-slate-300 select-all outline-none flex-grow" value="https://domain.com/?ref=">
+              <button onclick="copyReferralLink()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-white rounded-xl text-xs font-bold transition-all-300 flex items-center gap-1.5 shrink-0">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= KAWASAN MISI (Klaim Saldo) ================= -->
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+          <div class="absolute -top-10 -right-10 w-44 h-44 bg-indigo-500/5 rounded-full blur-2xl"></div>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                <i data-lucide="award" class="text-amber-400 w-6 h-6"></i> Kerjakan Misi Harian
+              </h2>
+              <p class="text-slate-400 text-xs sm:text-sm mt-1">Kunjungi sponsor selama 30 detik untuk klaim bonus langsung senilai <strong>Rp 1.500</strong> per misi harian!</p>
+            </div>
+            <div class="px-3.5 py-1.5 rounded-full bg-slate-950 border border-slate-800 text-xs font-medium text-slate-400">
+              Reset Harian Otomatis
+            </div>
+          </div>
+
+          <!-- Grid 5 Misi Sponsor -->
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-4" id="missionGridContainer">
+            <!-- Misi dimuat di JS secara dinamis -->
+          </div>
+        </div>
+
+        <!-- Dashboard Bottom Sections: Withdraw Form & Data Tables -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          <!-- Formulir Withdraw (1 Kolom Kiri) -->
+          <div class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl relative overflow-hidden lg:col-span-1">
+            <h2 class="text-lg font-bold text-white mb-1.5 flex items-center gap-2">
+              <i data-lucide="banknote" class="text-emerald-400 w-5 h-5"></i> Tarik Dana (Withdraw)
+            </h2>
+            <p class="text-slate-400 text-xs mb-6">Ajukan penarikan saldo instan Anda ke e-Wallet atau Bank Lokal terpercaya.</p>
+            
+            <form onsubmit="handleWithdrawSubmit(event)" class="space-y-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Nama Pemilik Rekening</label>
+                <input type="text" id="wdNama" required placeholder="Contoh: Ryan Pratama" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-700">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Pilih Metode Pembayaran</label>
+                <select id="wdMetode" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 outline-none text-white transition-all-300">
+                  <option value="DANA">DANA (E-Wallet)</option>
+                  <option value="OVO">OVO (E-Wallet)</option>
+                  <option value="GOPAY">GOPAY (E-Wallet)</option>
+                  <option value="SHOPEEPAY">SHOPEEPAY (E-Wallet)</option>
+                  <option value="BANK MANDIRI">Bank Mandiri (Transfer)</option>
+                  <option value="BANK BCA">Bank BCA (Transfer)</option>
+                  <option value="BANK BRI">Bank BRI (Transfer)</option>
+                  <option value="BANK BNI">Bank BNI (Transfer)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Nomor Rekening / HP</label>
+                <input type="text" id="wdNoRek" required placeholder="08xxxxxxxxxx atau Rek Mandiri" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-700">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1.5 tracking-wider uppercase">Jumlah Penarikan (Rupiah)</label>
+                <div class="relative">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-sm font-bold">Rp</span>
+                  <input type="number" id="wdJumlah" required min="10000" placeholder="Min. 10,000" class="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm focus:border-brand-500 outline-none text-white transition-all-300 placeholder:text-slate-700">
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/20 transition-all-300 flex items-center justify-center gap-2">
+                <i data-lucide="send" class="w-4 h-4"></i> Ajukan Penarikan
+              </button>
+            </form>
+          </div>
+
+          <!-- Log Tabel (2 Kolom Kanan) -->
+          <div class="lg:col-span-2 space-y-8">
+            
+            <!-- Riwayat Penarikan Dana -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden">
+              <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="history" class="text-slate-400 w-5 h-5"></i> Log Penarikan Dana
+              </h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-xs font-bold text-slate-400 tracking-wider">
+                      <th class="pb-3 pr-4">ID Transaksi</th>
+                      <th class="pb-3 pr-4">Metode</th>
+                      <th class="pb-3 pr-4">Nominal</th>
+                      <th class="pb-3 pr-4 text-center">Status</th>
+                      <th class="pb-3">Waktu</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableWithdrawBody" class="text-xs divide-y divide-slate-800/50">
+                    <tr>
+                      <td colspan="5" class="py-6 text-center text-slate-500">Belum ada transaksi penarikan dana terdaftar.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Riwayat Referrals -->
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden">
+              <h3 class="text-md font-bold text-white mb-4 flex items-center gap-2">
+                <i data-lucide="award" class="text-slate-400 w-5 h-5"></i> Daftar Referral Bergabung
+              </h3>
+              
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b border-slate-800 text-xs font-bold text-slate-400 tracking-wider">
+                      <th class="pb-3 pr-4">Username Teman</th>
+                      <th class="pb-3 pr-4">Komisi Bonus</th>
+                      <th class="pb-3">Tanggal Daftar</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tableReferralBody" class="text-xs divide-y divide-slate-800/50">
+                    <tr>
+                      <td colspan="3" class="py-6 text-center text-slate-500">Belum ada teman yang bergabung melalui referral Anda.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="border-t border-slate-800 py-6 text-center bg-slate-950 text-slate-600 text-xs mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p>&copy; 2026 NexusPay Network. Semua hak cipta dilindungi.</p>
+      <div class="flex gap-4">
+        <a href="#" class="hover:text-slate-400 transition-all-300">Ketentuan Layanan</a>
+        <a href="#" class="hover:text-slate-400 transition-all-300">Kebijakan Privasi</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= LOGIKA JAVASCRIPT WEBSITE ================= -->
+  <script>
+    // =========================================================================
+    // CONFIGURATION / KONEKSI BACKEND UTAMA
+    // Tempelkan URL Web App (Google Apps Script) Anda yang berakhiran "/exec" di bawah ini
+    // =========================================================================
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyglupiJI-AAd1gPJySijn6AQWJUSRqiiQbubmT-RtEJuQi7DCG1XjkFHKcM3PgRXp8Kw/exec";
+
+    // Client ID Google OAuth Anda untuk Google Sign-In asli.
+    const GOOGLE_CLIENT_ID = "687395098639-g52ukdmjvna1f8724n8jc4sem0ag3oik.apps.googleusercontent.com";
+
+    // List Link Misi Sponsor (Silakan ganti URL link ini sesuka Anda)
+    const DAILY_MISSIONS = [
+      { id: "misi_1", title: "Sponsor Nexus 1", reward: 1500, url: "https://www.google.com" },
+      { id: "misi_2", title: "Sponsor Nexus 2", reward: 1500, url: "https://www.wikipedia.org" },
+      { id: "misi_3", title: "Sponsor Nexus 3", reward: 1500, url: "https://www.youtube.com" },
+      { id: "misi_4", title: "Sponsor Nexus 4", reward: 1500, url: "https://www.github.com" },
+      { id: "misi_5", title: "Sponsor Nexus 5", reward: 1500, url: "https://news.google.com" }
+    ];
+
+    // State Aplikasi
+    let isLiveDatabase = false;
+    let currentUser = null; // Menyimpan data akun saat login
+
+    // Load State Saat Awal Render
+    window.addEventListener('load', async () => {
+      // Inisialisasi ikon Lucide
+      lucide.createIcons();
+      
+      // Ambil riwayat input rujukan referral di URL browser (?ref=KODE_REFERRAL)
+      const urlParams = new URLSearchParams(window.location.search);
+      const refCode = urlParams.get('ref');
+      if (refCode) {
+        localStorage.setItem('referredBy', refCode.toUpperCase());
+        showToast("referral_captured", `Kode referral: "${refCode}" terpasang otomatis!`, "info");
+      }
+
+      // Validasi URL dan Hubungkan ke Database API
+      await connectToAppsScript();
+
+      // Setup Google Sign-In SDK jika dikonfigurasi
+      initGoogleSignInSDK();
+
+      // Periksa sesi login tersimpan sebelumnya (Persistent Session)
+      const savedSession = localStorage.getItem('nexusSession');
+      if (savedSession) {
+        currentUser = JSON.parse(savedSession);
+        renderDashboard();
+      } else {
+        switchAuthTab('login');
+      }
+    });
+
+    // ================= FITUR: SHOW/HIDE PASSWORD =================
+    function togglePasswordVisibility(inputId, toggleBtn) {
+      const passwordInput = document.getElementById(inputId);
+      const icon = toggleBtn.querySelector('i');
+      
+      if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        icon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passwordInput.type = "password";
+        icon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    // ================= INTEGRASI GOOGLE SIGN-IN SDK =================
+    function initGoogleSignInSDK() {
+      // Periksa jika Client ID sudah diganti dan valid (bukan teks default atau placeholder)
+      if (GOOGLE_CLIENT_ID && !GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID") && GOOGLE_CLIENT_ID !== "") {
+        try {
+          google.accounts.id.initialize({
+            client_id: GOOGLE_CLIENT_ID,
+            callback: handleGoogleSignInResponse
+          });
+          
+          google.accounts.id.renderButton(
+            document.getElementById("googleBtnLogin"),
+            { theme: "dark", size: "large", width: "350" }
+          );
+          
+          google.accounts.id.renderButton(
+            document.getElementById("googleBtnRegister"),
+            { theme: "dark", size: "large", width: "350" }
+          );
+        } catch (error) {
+          console.warn("Kesalahan menginisialisasi Google Sign-In SDK:", error);
+        }
+      } else {
+        // Panduan Pengisian Google Login di console jika belum diset
+        const warningHTML = `
+          <div class="text-center p-3 border border-slate-800 rounded-2xl bg-slate-950/40 text-xs text-slate-500 leading-relaxed font-medium">
+            Masukkan Google Client ID Anda di kode sumber untuk mengaktifkan OAuth Google asli.
+          </div>
+        `;
+        document.getElementById("googleBtnLogin").innerHTML = warningHTML;
+        document.getElementById("googleBtnRegister").innerHTML = warningHTML;
+      }
+    }
+
+    // Callback pemrosesan token JWT setelah user sukses login via Google SDK asli
+    async function handleGoogleSignInResponse(response) {
+      showLoading(true, "Mengonfirmasi akun Google...");
+      try {
+        const base64Url = response.credential.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+
+        const googleProfile = JSON.parse(jsonPayload);
+        const gmail = googleProfile.email;
+        const name = googleProfile.name;
+
+        await processGoogleAuth(gmail, name);
+      } catch (err) {
+        showToast("oauth_err", "Kesalahan parsing profil akun Google.", "error");
+        showLoading(false);
+      }
+    }
+
+    // Memproses payload Gmail & Nama Google ke database real-time
+    async function processGoogleAuth(gmail, name) {
+      if (!isLiveDatabase) {
+        showToast("conn_err", "Gagal: Hubungkan database Apps Script terlebih dahulu.", "error");
+        showLoading(false);
+        return;
+      }
+
+      const referredBy = localStorage.getItem('referredBy') || "";
+      try {
+        const res = await callBackend({
+          action: "googleAuth",
+          gmail: gmail,
+          name: name,
+          referredBy: referredBy
+        });
+
+        showLoading(false);
+        if (res.success) {
+          currentUser = res.data;
+          localStorage.setItem('nexusSession', JSON.stringify(currentUser));
+          showToast("oauth_success", res.message, "success");
+          renderDashboard();
+        } else {
+          showToast("oauth_failed", res.message, "error");
+        }
+      } catch (e) {
+        showLoading(false);
+        showToast("oauth_server_err", "Gagal mengirim data Google ke server.", "error");
+      }
+    }
+
+    // ================= PENGECEKAN KONEKSI API BACKEND =================
+    async function connectToAppsScript() {
+      // PERBAIKAN BUG: Validasi hanya memblokir jika URL masih berupa placeholder kosong atau belum dikonfigurasi.
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("PASTE_YOUR_") || APPS_SCRIPT_URL === "" || !APPS_SCRIPT_URL.startsWith("http")) {
+        setOfflineState("Konfigurasi API Diperlukan");
+        return;
+      }
+      
+      showLoading(true, "Menghubungkan ke database...");
+      try {
+        // Melakukan pre-handshake dengan mode no-cors secara aman untuk mendeteksi validitas server
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "ping" })
+        });
+        
+        // Mode online berhasil diaktifkan
+        isLiveDatabase = true;
+        document.getElementById("apiStatusBadge").className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 transition-all-300";
+        document.getElementById("statusDot").className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+        document.getElementById("statusText").innerText = "Database Terhubung";
+        
+        // Sembunyikan helper setup karena koneksi berhasil
+        document.getElementById("setupHelperScreen").classList.add("hidden");
+        showToast("conn_success", "Terhubung secara real-time ke Google Sheets!", "success");
+      } catch (err) {
+        console.error("Koneksi gagal:", err);
+        setOfflineState("Gagal Menghubungkan");
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function setOfflineState(message = "Server Terputus") {
+      isLiveDatabase = false;
+      document.getElementById("apiStatusBadge").className = "flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-xs font-semibold text-rose-400 transition-all-300";
+      document.getElementById("statusDot").className = "w-2 h-2 rounded-full bg-rose-500";
+      document.getElementById("statusText").innerText = message;
+      
+      // Tampilkan setup helper screen agar pengguna tahu cara memperbaikinya
+      document.getElementById("setupHelperScreen").classList.remove("hidden");
+    }
+
+    // Helper panggil request POST ke Apps Script
+    async function callBackend(payload) {
+      if (!isLiveDatabase) {
+        showToast("no_conn", "Kesalahan: Server terputus dari database.", "error");
+        return { success: false, message: "Koneksi terputus." };
+      }
+      
+      const response = await fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify(payload)
+      });
+      return await response.json();
+    }
+
+    // ================= NAVIGASI AUTH TAB =================
+    function switchAuthTab(type) {
+      const loginTab = document.getElementById("tabBtnLogin");
+      const registerTab = document.getElementById("tabBtnRegister");
+      const loginForm = document.getElementById("loginFormSection");
+      const registerForm = document.getElementById("registerFormSection");
+
+      if (type === 'login') {
+        loginTab.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 bg-brand-600 text-white shadow-lg";
+        registerTab.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 text-slate-400 hover:text-white";
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+      } else {
+        registerTab.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 bg-indigo-600 text-white shadow-lg";
+        loginTab.className = "flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all-300 text-slate-400 hover:text-white";
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+      }
+    }
+
+    // ================= ALUR LOGIN & REGISTRASI MANUAL =================
+    async function handleAuthSubmit(event, mode) {
+      event.preventDefault();
+      
+      if (!isLiveDatabase) {
+        showToast("auth_err", "Gagal: Hubungkan API Apps Script Anda terlebih dahulu.", "error");
+        return;
+      }
+
+      if (mode === 'login') {
+        const gmail = document.getElementById("loginGmail").value.trim();
+        const password = document.getElementById("loginPassword").value;
+        
+        showLoading(true, "Memvalidasi akun...");
+        try {
+          const res = await callBackend({ action: "login", gmail, password });
+          showLoading(false);
+          if (res.success) {
+            currentUser = res.data;
+            localStorage.setItem('nexusSession', JSON.stringify(currentUser));
+            showToast("login_ok", res.message, "success");
+            renderDashboard();
+          } else {
+            showToast("login_fail", res.message, "error");
+          }
+        } catch (e) {
+          showLoading(false);
+          showToast("err_net", "Kesalahan jaringan, coba kembali.", "error");
+        }
+      } else {
+        const username = document.getElementById("registerUsername").value.trim();
+        const gmail = document.getElementById("registerGmail").value.trim();
+        const password = document.getElementById("registerPassword").value;
+        const referredBy = document.getElementById("registerReferral").value.trim().toUpperCase();
+        
+        showLoading(true, "Mendaftarkan akun baru...");
+        try {
+          const res = await callBackend({ action: "register", username, gmail, password, referredBy });
+          showLoading(false);
+          if (res.success) {
+            currentUser = res.data;
+            localStorage.setItem('nexusSession', JSON.stringify(currentUser));
+            showToast("reg_ok", res.message, "success");
+            renderDashboard();
+          } else {
+            showToast("reg_fail", res.message, "error");
+          }
+        } catch (e) {
+          showLoading(false);
+          showToast("err_net", "Gagal mendaftarkan akun ke server.", "error");
+        }
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('nexusSession');
+      currentUser = null;
+      document.getElementById("dashboardContainer").classList.add("hidden");
+      document.getElementById("authContainer").classList.remove("hidden");
+      switchAuthTab('login');
+      showToast("logout_ok", "Berhasil keluar.", "info");
+    }
+
+    // ================= MERENDER STATISTIK DASHBOARD =================
+    async function renderDashboard() {
+      if (!currentUser) return;
+      
+      document.getElementById("authContainer").classList.add("hidden");
+      document.getElementById("dashboardContainer").classList.remove("hidden");
+      
+      document.getElementById("dashUsername").innerText = currentUser.username;
+      document.getElementById("dashEmail").innerText = currentUser.gmail;
+      document.getElementById("dashRefCode").innerText = currentUser.referralCode;
+      
+      const domain = window.location.origin + window.location.pathname;
+      document.getElementById("referralUrlInput").value = `${domain}?ref=${currentUser.referralCode}`;
+      
+      if (!isLiveDatabase) {
+        document.getElementById("dashSaldo").innerText = "Rp 0";
+        showToast("offline_dashboard", "Koneksi offline, gagal sinkronisasi data.", "error");
+        renderMissions();
+        return;
+      }
+
+      showLoading(true, "Memuat data terbaru...");
+      try {
+        const res = await callBackend({ action: "getDashboardData", userId: currentUser.id });
+        showLoading(false);
+        if (res.success) {
+          currentUser = res.data.profile;
+          localStorage.setItem('nexusSession', JSON.stringify(currentUser));
+          
+          document.getElementById("dashSaldo").innerText = "Rp " + currentUser.saldo.toLocaleString("id-ID");
+          document.getElementById("dashRefCount").innerText = res.data.referrals.count + " Orang";
+          document.getElementById("dashRefTotalBonus").innerText = "Rp " + res.data.referrals.totalBonus.toLocaleString("id-ID");
+          
+          renderTableWithdraws(res.data.withdraws);
+          renderTableReferrals(res.data.referrals.list);
+        } else {
+          showToast("get_stat_fail", res.message, "error");
+        }
+      } catch (e) {
+        showLoading(false);
+        showToast("get_stat_err", "Gagal mengunduh log transaksi.", "error");
+      }
+
+      renderMissions();
+    }
+
+    function renderTableWithdraws(list) {
+      const tbody = document.getElementById("tableWithdrawBody");
+      tbody.innerHTML = "";
+      
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">Belum ada transaksi penarikan dana terdaftar.</td></tr>`;
+        return;
+      }
+      
+      list.reverse().forEach(wd => {
+        let statusBadge = "";
+        if (wd.status === "Pending") {
+          statusBadge = `<span class="px-2 py-1 rounded-md bg-amber-500/10 text-amber-400 font-bold">Pending</span>`;
+        } else if (wd.status === "Success") {
+          statusBadge = `<span class="px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-400 font-bold">Selesai</span>`;
+        } else {
+          statusBadge = `<span class="px-2 py-1 rounded-md bg-rose-500/10 text-rose-400 font-bold">Ditolak</span>`;
+        }
+        
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/30 transition-all-300">
+            <td class="py-3 pr-4 font-semibold text-slate-300">${wd.id}</td>
+            <td class="py-3 pr-4 font-medium text-slate-400">${wd.metode}</td>
+            <td class="py-3 pr-4 font-bold text-slate-200">Rp ${wd.jumlah.toLocaleString("id-ID")}</td>
+            <td class="py-3 pr-4 text-center">${statusBadge}</td>
+            <td class="py-3 text-slate-500">${wd.tanggal}</td>
+          </tr>
+        `;
+      });
+    }
+
+    function renderTableReferrals(list) {
+      const tbody = document.getElementById("tableReferralBody");
+      tbody.innerHTML = "";
+      
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="py-6 text-center text-slate-500">Belum ada teman yang bergabung melalui referral Anda.</td></tr>`;
+        return;
+      }
+      
+      list.reverse().forEach(ref => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-slate-800/30 transition-all-300">
+            <td class="py-3 pr-4 font-semibold text-slate-300">@${ref.referredUsername}</td>
+            <td class="py-3 pr-4 font-bold text-brand-400">+Rp ${ref.bonus.toLocaleString("id-ID")}</td>
+            <td class="py-3 text-slate-500">${ref.tanggal}</td>
+          </tr>
+        `;
+      });
+    }
+
+    // ================= RENDERING SISTEM MISI & COUNTDOWN =================
+    function renderMissions() {
+      const grid = document.getElementById("missionGridContainer");
+      grid.innerHTML = "";
+
+      const finishedMissions = JSON.parse(localStorage.getItem(`misis_${currentUser.id}_${getTodayString()}`) || "[]");
+
+      DAILY_MISSIONS.forEach(mission => {
+        const isDone = finishedMissions.includes(mission.id);
+
+        let buttonHTML = "";
+        if (isDone) {
+          buttonHTML = `
+            <button disabled class="w-full py-2 bg-slate-800 text-slate-500 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 cursor-not-allowed">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Selesai
+            </button>
+          `;
+        } else {
+          buttonHTML = `
+            <button onclick="startMissionTimer('${mission.id}', '${mission.url}')" id="btn_${mission.id}" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl transition-all-300 flex items-center justify-center gap-1.5">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i> Mulai Misi
+            </button>
+          `;
+        }
+
+        grid.innerHTML += `
+          <div class="bg-slate-950/60 border border-slate-800/60 p-4 rounded-2xl flex flex-col justify-between gap-4 transition-all-300 hover:border-slate-700" id="card_${mission.id}">
+            <div>
+              <div class="w-9 h-9 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-2.5">
+                <i data-lucide="link" class="w-4.5 h-4.5"></i>
+              </div>
+              <h4 class="text-xs font-extrabold text-slate-200 truncate">${mission.title}</h4>
+              <p class="text-[11px] text-emerald-400 font-bold mt-1">+Rp ${mission.reward.toLocaleString("id-ID")}</p>
+            </div>
+            
+            <div id="action_container_${mission.id}">
+              ${buttonHTML}
+            </div>
+          </div>
+        `;
+      });
+
+      lucide.createIcons();
+    }
+
+    function startMissionTimer(missionId, targetUrl) {
+      window.open(targetUrl, '_blank');
+
+      const actionContainer = document.getElementById(`action_container_${missionId}`);
+      let secondsLeft = 30;
+
+      actionContainer.innerHTML = `
+        <div class="w-full text-center space-y-1">
+          <div class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Tunggu Sponsor...</div>
+          <div class="py-1.5 bg-slate-800 text-amber-400 font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5" id="timer_${missionId}">
+            <i data-lucide="hourglass" class="w-3.5 h-3.5 animate-spin"></i> ${secondsLeft} Detik
+          </div>
+        </div>
+      `;
+      lucide.createIcons();
+
+      const countdown = setInterval(() => {
+        secondsLeft--;
+        const timerText = document.getElementById(`timer_${missionId}`);
+        if (timerText) {
+          timerText.innerHTML = `<i data-lucide="hourglass" class="w-3.5 h-3.5 animate-spin"></i> ${secondsLeft} Detik`;
+          lucide.createIcons();
+        }
+
+        if (secondsLeft <= 0) {
+          clearInterval(countdown);
+          actionContainer.innerHTML = `
+            <button onclick="claimMissionReward('${missionId}')" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 animate-bounce text-white text-xs font-extrabold rounded-xl transition-all-300 flex items-center justify-center gap-1.5">
+              <i data-lucide="gift" class="w-3.5 h-3.5"></i> Klaim Bonus
+            </button>
+          `;
+          lucide.createIcons();
+        }
+      }, 1000);
+    }
+
+    async function claimMissionReward(missionId) {
+      if (!isLiveDatabase) {
+        showToast("conn_err_mission", "Database terputus, bonus misi tidak dapat diklaim.", "error");
+        return;
+      }
+
+      showLoading(true, "Mengonfirmasi klaim...");
+      try {
+        const res = await callBackend({
+          action: "completeMission",
+          userId: currentUser.id,
+          missionId: missionId
+        });
+
+        showLoading(false);
+        if (res.success) {
+          saveMissionLocalStorage(missionId);
+          showToast("claim_success", res.message, "success");
+          renderDashboard();
+        } else {
+          showToast("claim_fail", res.message, "error");
+        }
+      } catch (e) {
+        showLoading(false);
+        showToast("claim_err", "Klaim gagal karena kendala jaringan server.", "error");
+      }
+    }
+
+    function saveMissionLocalStorage(missionId) {
+      const today = getTodayString();
+      const finishedMissions = JSON.parse(localStorage.getItem(`misis_${currentUser.id}_${today}`) || "[]");
+      if (!finishedMissions.includes(missionId)) {
+        finishedMissions.push(missionId);
+      }
+      localStorage.setItem(`misis_${currentUser.id}_${today}`, JSON.stringify(finishedMissions));
+    }
+
+    // ================= PENGAJUAN PENARIKAN (WITHDRAW) =================
+    async function handleWithdrawSubmit(event) {
+      event.preventDefault();
+
+      if (!isLiveDatabase) {
+        showToast("wd_err_offline", "Tidak dapat mengajukan penarikan saat server terputus.", "error");
+        return;
+      }
+
+      const nama = document.getElementById("wdNama").value.trim();
+      const metode = document.getElementById("wdMetode").value;
+      const noRekening = document.getElementById("wdNoRek").value.trim();
+      const jumlah = Number(document.getElementById("wdJumlah").value);
+
+      if (jumlah < 10000) {
+        showToast("wd_err_min", "Minimal penarikan dana adalah Rp 10.000.", "error");
+        return;
+      }
+
+      if (currentUser.saldo < jumlah) {
+        showToast("wd_err_saldo", "Maaf, saldo Anda tidak mencukupi.", "error");
+        return;
+      }
+
+      showLoading(true, "Mengirim pengajuan...");
+      try {
+        const res = await callBackend({
+          action: "withdraw",
+          userId: currentUser.id,
+          nama,
+          metode,
+          noRekening,
+          jumlah
+        });
+
+        showLoading(false);
+        if (res.success) {
+          showToast("wd_ok", res.message, "success");
+          
+          document.getElementById("wdNama").value = "";
+          document.getElementById("wdNoRek").value = "";
+          document.getElementById("wdJumlah").value = "";
+          
+          renderDashboard();
+        } else {
+          showToast("wd_fail", res.message, "error");
+        }
+      } catch (e) {
+        showLoading(false);
+        showToast("wd_err_net", "Kendala jaringan, gagal mengirim permohonan.", "error");
+      }
+    }
+
+    // Helper tanggal
+    function getTodayString() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    // ================= UTILITIES =================
+    function copyReferralLink() {
+      const input = document.getElementById("referralUrlInput");
+      input.select();
+      input.setSelectionRange(0, 99999);
+      
+      try {
+        document.execCommand('copy');
+        showToast("copy_ok", "Tautan rujukan disalin!", "success");
+      } catch (err) {
+        showToast("copy_fail", "Gagal menyalin tautan.", "error");
+      }
+    }
+
+    // ================= TOAST NOTIFIKASI =================
+    function showToast(id, message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      
+      if (container.children.length >= 3) {
+        container.removeChild(container.firstChild);
+      }
+      
+      let themeClass = "bg-slate-900 border-slate-800 text-slate-100";
+      let iconHTML = `<i data-lucide="info" class="text-blue-400 w-5 h-5"></i>`;
+
+      if (type === "success") {
+        themeClass = "bg-emerald-950/95 border-emerald-500/20 text-emerald-100";
+        iconHTML = `<i data-lucide="check-circle-2" class="text-emerald-400 w-5 h-5"></i>`;
+      } else if (type === "error") {
+        themeClass = "bg-rose-950/95 border-rose-500/20 text-rose-100";
+        iconHTML = `<i data-lucide="alert-triangle" class="text-rose-400 w-5 h-5"></i>`;
+      }
+
+      const toast = document.createElement("div");
+      toast.id = `toast_${id}`;
+      toast.className = `${themeClass} border p-4 rounded-2xl shadow-2xl flex items-start gap-3 transition-all-300 transform translate-y-2 opacity-0 w-full`;
+      toast.innerHTML = `
+        <div class="shrink-0 mt-0.5">${iconHTML}</div>
+        <div class="flex-grow">
+          <p class="text-xs font-semibold leading-relaxed">${message}</p>
+        </div>
+        <button onclick="this.parentElement.remove()" class="text-slate-500 hover:text-slate-300 shrink-0 outline-none">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.classList.remove("translate-y-2", "opacity-0");
+      }, 50);
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.add("translate-y-2", "opacity-0");
+          setTimeout(() => toast.remove(), 300);
+        }
+      }, 4500);
+    }
+
+    function showLoading(show, message = "Memuat data...") {
+      const overlay = document.getElementById("loadingOverlay");
+      const text = document.getElementById("loadingText");
+      if (show) {
+        text.innerText = message;
+        overlay.classList.remove("hidden");
+      } else {
+        overlay.classList.add("hidden");
+      }
+    }
+  </script>
+</body>
+</html>
